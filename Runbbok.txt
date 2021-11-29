@@ -1,0 +1,8 @@
+Tema2 SPRCc - RUNBOOK
+
+docker exec -it postgres-db bash
+
+docker run --name postgres-db -e POSTGRES_PASSWORD=dbpassword -d -p 5432:5432 postgres:alpine
+
+create table Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);
+
