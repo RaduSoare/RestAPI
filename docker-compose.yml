@@ -1,0 +1,38 @@
+version: '3.3'
+
+services:
+  postgres:
+    image: postgres
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dbpassword
+      POSTGRES_DB: sprc_database
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+
+  webserver:
+    image: flask-web-server
+    depends_on:
+      - postgres
+    restart: always
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: dbpassword
+    ports:
+      - "80:80"
+    networks:
+      - postgres
+
+networks:
+  postgres:
+    driver: bridge
+
+volumes:
+  postgres-data: {}
