@@ -14,7 +14,6 @@ DB_NAME = "sprc_database"
 DB_USER = "postgres"
 DB_PASS = "dbpassword"
 
-
 db_connection = psycopg2.connect(database=DB_NAME,
                                  user=DB_USER,
                                  password=DB_PASS,
@@ -68,10 +67,39 @@ def get_countries():
 
     countries_list = cursor.fetchall()
 
-    countries_json_list = list(map(lambda x: {"id" : x[0], "lat" : x[1], "lon" : x[2]}, countries_list))
+    countries_json_list = list(map(lambda x: {"id" : x[0], "nume" : x[1], "lat" : x[2], "lon" : x[3]}, countries_list))
 
     return jsonify(countries_json_list)
 
+@app.route("/api/countries/<int:id>", methods=["PUT"])
+def update_country(id):
+    
+    params = request.get_json(silent=True)
+
+    if not params:
+        return Response(status=400)
+
+    updated_country = jsonToCountry(params)
+    if updated_country is None:
+        return Response(status=400)
+
+
+    cursor.execute("UPDATE TARI SET nume_tara=%s, latitudine=%s, longitudine=%s where id=%s returning id", (updated_country.name, updated_country.lat, updated_country.long, id))
+
+    if cursor.fetchone() is None:
+        return Response(status=404)
+
+    return Response(status=200)
+
+@app.route("/api/countries/<int:id>", methods=["DELETE"])
+def delete_country(id):
+
+    cursor.execute("DELETE FROM TARI WHERE id=%s returning id", (id,))
+
+    if cursor.fetchone()[0] is None:
+        return Response(status=404)
+
+    return Response(status=200)
 
 
 if __name__ == '__main__':
