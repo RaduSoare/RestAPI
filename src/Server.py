@@ -6,7 +6,8 @@ from psycopg2 import IntegrityError
 
 import Constants
 import os
-from models.Country import Country
+from models.Country import *
+from models.City import *
 from database.Database import *
 
 DB_HOST = "localhost:5432"
@@ -25,20 +26,11 @@ cursor = db_connection.cursor()
 
 cursor.execute(
         'create table if not exists Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
+cursor.execute(
+        'create table if not exists Orase (id serial PRIMARY KEY, id_tara INTEGER UNIQUE NOT NULL, nume_oras VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
 
 app = Flask(__name__)
 
-def jsonToCountry(json):
-    name = json.get(Constants.NAME)
-    if not name:
-        return None
-    lat = json.get(Constants.LAT)
-    if not lat:
-        return None
-    long = json.get(Constants.LONG)
-    if not long:
-        return None
-    return Country(name, lat, long)
 
 @app.route("/api/countries", methods=["POST"])
 def add_country():
@@ -59,6 +51,27 @@ def add_country():
         cursor.execute("ROLLBACK")
         db_connection.commit()
         return Response(status=409)
+
+# @app.route("/api/cities", methods=["POST"])
+# def add_city():
+
+#     params = request.get_json(silent=True)
+
+#     if not params:
+#         return Response(status=400)
+
+#     new_city = jsonToCity(params)
+#     if new_city is None:
+#         return Response(status=400)
+
+#     try:
+#         id = insert_to_cities(cursor, db_connection, new_city)
+#         return jsonify({'id': id})
+#     except IntegrityError as e:
+#         cursor.execute("ROLLBACK")
+#         db_connection.commit()
+#         return Response(status=409)
+
 
 @app.route("/api/countries", methods=["GET"])
 def get_countries():
@@ -96,7 +109,7 @@ def delete_country(id):
 
     cursor.execute("DELETE FROM TARI WHERE id=%s returning id", (id,))
 
-    if cursor.fetchone()[0] is None:
+    if cursor.fetchone() is None:
         return Response(status=404)
 
     return Response(status=200)
