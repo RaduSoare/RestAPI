@@ -25,6 +25,15 @@ def insert_to_cities(cursor, db_connection, city):
 
     return cursor.fetchone()[0]
 
+def insert_to_temperatures(cursor, db_connection, temperature):
+    
+    cursor.execute("insert into Temperaturi (id_oras, valoare, timestamp) values (%s, %s, %s) returning id",
+                    (temperature.cityID, temperature.value, temperature.timestamp))
+
+    db_connection.commit()
+
+    return cursor.fetchone()[0]
+
 def post_helper(params, cursor, db_connection, jsonToFunc, insertToFunc):
     if not params:
         return Response(status=400)
@@ -57,6 +66,9 @@ def execute_update_country(cursor, country, id):
 
 def execute_update_city(cursor, city, id):
     cursor.execute("UPDATE ORASE SET id_tara=%s, nume_oras=%s, latitudine=%s, longitudine=%s where id=%s returning id", (city.countryID, city.name, city.lat, city.long, id))
+
+def execute_update_temperature(cursor, temperature, id):
+    cursor.execute("UPDATE TEMPERATURI SET id_oras=%s, valoare=%s where id=%s returning id", (temperature.cityID, temperature.value, id))
 
 def put_helper(params, id, cursor, jsonToFunc, executeUpdateFunc, db_connection):
     

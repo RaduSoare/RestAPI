@@ -8,6 +8,7 @@ import Constants
 import os
 from models.Country import *
 from models.City import *
+from models.Temperature import *
 from database.Database import *
 
 DB_HOST = "localhost:5432"
@@ -27,8 +28,14 @@ cursor = db_connection.cursor()
 cursor.execute(
         'create table if not exists Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
 db_connection.commit()
+
 cursor.execute(
         'create table if not exists Orase (id serial PRIMARY KEY, id_tara INTEGER NOT NULL, nume_oras VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION, UNIQUE (id_tara, nume_oras));')
+db_connection.commit()
+
+cursor.execute(
+    'create table if not exists Temperaturi (id serial PRIMARY KEY, id_oras INTEGER NOT NULL, valoare DOUBLE PRECISION,  timestamp DATE NOT NULL DEFAULT CURRENT_DATE, UNIQUE (id_oras, timestamp));'
+)
 db_connection.commit()
 
 
@@ -45,6 +52,11 @@ def add_country():
 def add_city():
 
     return post_helper(request.get_json(silent=True), cursor, db_connection, jsonToCity, insert_to_cities)
+
+@app.route("/api/temperatures", methods=["POST"])
+def add_temperature():
+
+    return post_helper(request.get_json(silent=True), cursor, db_connection, jsonToTemperature, insert_to_temperatures)
 
 
 
@@ -82,6 +94,11 @@ def update_city(id):
     
     return put_helper(request.get_json(silent=True), id, cursor, jsonToCity, execute_update_city, db_connection)
 
+@app.route("/api/temperatures/<int:id>", methods=["PUT"])
+def update_temperature(id):
+    
+    return put_helper(request.get_json(silent=True), id, cursor, jsonToTemperature, execute_update_temperature, db_connection)
+
 
 @app.route("/api/countries/<int:id>", methods=["DELETE"])
 def delete_country(id):
@@ -93,6 +110,10 @@ def delete_city(id):
 
     return delete_helper(id, cursor, Constants.ORASE_TABLE, db_connection)
 
+@app.route("/api/temperatures/<int:id>", methods=["DELETE"])
+def delete_temperature(id):
+
+    return delete_helper(id, cursor, Constants.TEMPERATURI_TABLE, db_connection)
 
 
 
