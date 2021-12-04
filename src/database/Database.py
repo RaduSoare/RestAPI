@@ -1,5 +1,6 @@
 from flask import Flask
 from flask import request, jsonify, Response
+from psycopg2 import IntegrityError
 
 def fetched_data_to_json_countries(countries_list):
     return list(map(lambda x: {"id" : x[0], "nume" : x[1], "lat" : x[2], "lon" : x[3]}, countries_list))
@@ -10,7 +11,8 @@ def fetched_data_to_json_cities(cities_list):
 def insert_to_countries(cursor, db_connection, country):
 
     cursor.execute("insert into Tari (nume_tara, latitudine, longitudine) values (%s, %s, %s) returning id",
-                   (country.name, country.lat, country.long))
+                (country.name, country.lat, country.long))
+
 
     db_connection.commit()
 

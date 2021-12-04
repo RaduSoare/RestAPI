@@ -23,11 +23,15 @@ create table if not exists Temperaturi (id serial PRIMARY KEY, id_oras INTEGER N
 
 
 
-insert into Temperaturi (id_oras, valoare, posting_date) values (13, 23.43, CURRENT_DATE);
+insert into Temperaturi (id_oras, valoare, timestamp) values (13, 23.43, CURRENT_DATE);
 
 
 
 select * from temperaturi WHERE  posting_date > '2021-11-30'::date;
+
+127.0.0.1:80/api/countries
+
+select temperaturi.id temperaturi.id_oras orase.id orase.nume_oras orase.latitudine orase.longitudine from temperaturi join orase on temperaturi.id_oras=orase.id;
 
 
 

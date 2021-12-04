@@ -42,6 +42,8 @@ db_connection.commit()
 app = Flask(__name__)
 
 
+### POST ROUTES ###
+
 @app.route("/api/countries", methods=["POST"])
 def add_country():
 
@@ -59,6 +61,7 @@ def add_temperature():
     return post_helper(request.get_json(silent=True), cursor, db_connection, jsonToTemperature, insert_to_temperatures)
 
 
+### GET ROUTES ###
 
 @app.route("/api/countries", methods=["GET"])
 def get_countries():
@@ -81,7 +84,32 @@ def get_cities_from_country(id_Tara):
 
     return get_helper(sql_command, cursor, fetched_data_to_json_cities)
 
+# @app.route("/api/temperatures", methods=["GET"])
+# def get_temperatures():
+#     lat_param = float(request.args.get(Constants.LAT))
+#     lon_param = float(request.args.get(Constants.LONG))
+#     from_param = request.args.get(Constants.FROM)
+#     until_param = request.args.get(Constants.UNTIL)
 
+#     # cursor.execute(sql_command)
+
+#     # locations_list = cursor.fetchall()
+
+#     # for location 
+
+
+#     return jsonify(lat_param)
+
+# @app.route("/api/temperatures/cities/<int:id_oras>", methods=["GET"])
+# def get_temperatures_cities(id_oras):
+#     return Response(status=200)
+
+# @app.route("/api/temperatures/countries/<int:id_Tara>", methods=["GET"])
+# def get_temperatures_countries(id_Tara):
+#     return Response(status=200)
+
+
+### PUT ROUTES ###
 
 @app.route("/api/countries/<int:id>", methods=["PUT"])
 def update_country(id):
@@ -99,6 +127,7 @@ def update_temperature(id):
     
     return put_helper(request.get_json(silent=True), id, cursor, jsonToTemperature, execute_update_temperature, db_connection)
 
+### DELETE ROUTES ###
 
 @app.route("/api/countries/<int:id>", methods=["DELETE"])
 def delete_country(id):

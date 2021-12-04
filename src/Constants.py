@@ -1,6 +1,8 @@
 NAME = "nume"
 LAT = "lat"
 LONG = "lon"
+FROM = "from"
+UNTIL = "util"
 COUNTRY_ID="idTara"
 CITY_ID="id_oras"
 VALUE="valoare"
