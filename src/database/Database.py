@@ -3,7 +3,7 @@ from flask import request, jsonify, Response
 from psycopg2 import IntegrityError
 
 def fetched_data_to_json_countries(countries_list):
-    return list(map(lambda x: {"id" : x[0], "nume" : x[1], "lat" : x[2], "lon" : x[3]}, countries_list))
+    return list(map(lambda x: {"id": x[0], "nume": x[1], "lat": x[2], "lon": x[3]}, countries_list))
 
 def fetched_data_to_json_cities(cities_list):
     return list(map(lambda x: {"id" : x[0], "idTara" : x[1] ,"nume" : x[2], "lat" : x[3], "lon" : x[4]}, cities_list))
@@ -46,7 +46,7 @@ def post_helper(params, cursor, db_connection, jsonToFunc, insertToFunc):
 
     try:
         id = insertToFunc(cursor, db_connection, new_entry)
-        return jsonify({'id': id})
+        return jsonify({'id': id}), 201
     except IntegrityError as e:
         cursor.execute("ROLLBACK")
         db_connection.commit()
@@ -81,18 +81,24 @@ def put_helper(params, id, cursor, jsonToFunc, executeUpdateFunc, db_connection)
     if updated_data is None:
         return Response(status=400)
     
-    executeUpdateFunc(cursor, updated_data, id)
+    try:
+        executeUpdateFunc(cursor, updated_data, id)
 
-    if cursor.fetchone() is None:
-        return Response(status=404)
+        if cursor.fetchone() is None:
+            return Response(status=404)
 
-    db_connection.commit()
-    return Response(status=200)
+        db_connection.commit()
+        return Response(status=200)
+    except IntegrityError as e:
+        cursor.execute("ROLLBACK")
+        db_connection.commit()
+        return Response(status=409)
 
 def delete_helper(id, cursor, table_name, db_connection):
+
     cursor.execute("DELETE FROM %s WHERE id=%s returning id" % (table_name, id,))
 
-    if cursor.fetchone()[0] is None:
+    if cursor.fetchone() is None:
         return Response(status=404)
     
     db_connection.commit()

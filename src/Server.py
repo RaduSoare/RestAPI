@@ -25,6 +25,14 @@ db_connection = psycopg2.connect(database=DB_NAME,
 
 cursor = db_connection.cursor()
 
+
+cursor.execute('drop table tari;')
+db_connection.commit()
+cursor.execute('drop table orase;')
+db_connection.commit()
+cursor.execute('drop table temperaturi;')
+db_connection.commit()
+
 cursor.execute(
         'create table if not exists Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
 db_connection.commit()
@@ -40,6 +48,7 @@ db_connection.commit()
 
 
 app = Flask(__name__)
+app.config['JSON_SORT_KEYS'] = False
 
 
 ### POST ROUTES ###

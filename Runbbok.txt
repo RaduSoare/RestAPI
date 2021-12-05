@@ -31,7 +31,7 @@ select * from temperaturi WHERE  posting_date > '2021-11-30'::date;
 
 127.0.0.1:80/api/countries
 
-select temperaturi.id temperaturi.id_oras orase.id orase.nume_oras orase.latitudine orase.longitudine from temperaturi join orase on temperaturi.id_oras=orase.id;
+select temperaturi.id, temperaturi.valoare, tari.nume_tara, orase.nume_oras orase.latitudine orase.longitudine from temperaturi join orase on temperaturi.id_oras=orase.id;
 
 
 
