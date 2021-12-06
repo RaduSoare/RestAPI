@@ -26,12 +26,12 @@ db_connection = psycopg2.connect(database=DB_NAME,
 cursor = db_connection.cursor()
 
 
-cursor.execute('drop table tari;')
-db_connection.commit()
-cursor.execute('drop table orase;')
-db_connection.commit()
-cursor.execute('drop table temperaturi;')
-db_connection.commit()
+# cursor.execute('drop table tari;')
+# db_connection.commit()
+# cursor.execute('drop table orase;')
+# db_connection.commit()
+# cursor.execute('drop table temperaturi;')
+# db_connection.commit()
 
 cursor.execute(
         'create table if not exists Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
@@ -93,21 +93,52 @@ def get_cities_from_country(id_Tara):
 
     return get_helper(sql_command, cursor, fetched_data_to_json_cities)
 
-# @app.route("/api/temperatures", methods=["GET"])
-# def get_temperatures():
-#     lat_param = float(request.args.get(Constants.LAT))
-#     lon_param = float(request.args.get(Constants.LONG))
-#     from_param = request.args.get(Constants.FROM)
-#     until_param = request.args.get(Constants.UNTIL)
+@app.route("/api/temperatures", methods=["GET"])
+def get_temperatures():
+    lat_param = "orase.latitudine"
+    lon_param = "orase.longitudine"
+    from_param = "temperaturi.timestamp"
+    until_param =  "temperaturi.timestamp"
 
-#     # cursor.execute(sql_command)
+    try:
+        lat_param = float(request.args.get(Constants.LAT))
+    except Exception as e:
+        lat_param = "orase.latitudine"
+    try:
+        lon_param = float(request.args.get(Constants.LONG))
+    except Exception as e:
+        lon_param = "orase.longitudine"
 
-#     # locations_list = cursor.fetchall()
+    try:
+        temp = request.args.get(Constants.FROM)
+        from_param = "'%s'::date" % temp
+    except Exception as e:
+        from_param="temperaturi.timestamp"
 
-#     # for location 
+    try:
+        temp = request.args.get(Constants.UNTIL)
+        until_param = "'%s'::date" % temp
+    except Exception as e:
+        until_param = "temperaturi.timestamp"
 
+    sql_command_debug = "select temperaturi.id, temperaturi.valoare, tari.id, tari.nume_tara, tari.latitudine, tari.longitudine " \
+                  "from temperaturi " \
+                  "join orase on temperaturi.id_oras=orase.id " \
+                  "join tari on orase.id_tara=tari.id " \
+                  "where " \
+                  "tari.latitudine=%s and tari.longitudine=%s " \
+                  "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (lat_param, lon_param, from_param, until_param)
 
-#     return jsonify(lat_param)
+    sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
+                        "from temperaturi " \
+                        "join orase on temperaturi.id_oras=orase.id " \
+                        "join tari on orase.id_tara=tari.id " \
+                        "where " \
+                        "orase.latitudine=%s and orase.longitudine=%s " \
+                        "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
+                        lat_param, lon_param, from_param, until_param)
+
+    return get_helper(sql_command, cursor, fetched_data_to_json_temperatures)
 
 # @app.route("/api/temperatures/cities/<int:id_oras>", methods=["GET"])
 # def get_temperatures_cities(id_oras):

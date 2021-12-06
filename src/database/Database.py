@@ -8,6 +8,9 @@ def fetched_data_to_json_countries(countries_list):
 def fetched_data_to_json_cities(cities_list):
     return list(map(lambda x: {"id" : x[0], "idTara" : x[1] ,"nume" : x[2], "lat" : x[3], "lon" : x[4]}, cities_list))
 
+def fetched_data_to_json_temperatures(temperatures_list):
+    return list(map(lambda x: {"id" : x[0], "valoare" : x[1], "timestamp" : x[2]}, temperatures_list))
+
 def insert_to_countries(cursor, db_connection, country):
 
     cursor.execute("insert into Tari (nume_tara, latitudine, longitudine) values (%s, %s, %s) returning id",
@@ -47,7 +50,7 @@ def post_helper(params, cursor, db_connection, jsonToFunc, insertToFunc):
     try:
         id = insertToFunc(cursor, db_connection, new_entry)
         return jsonify({'id': id}), 201
-    except IntegrityError as e:
+    except Exception as e:
         cursor.execute("ROLLBACK")
         db_connection.commit()
         return Response(status=409)
