@@ -9,13 +9,12 @@ def fetched_data_to_json_cities(cities_list):
     return list(map(lambda x: {"id" : x[0], "idTara" : x[1] ,"nume" : x[2], "lat" : x[3], "lon" : x[4]}, cities_list))
 
 def fetched_data_to_json_temperatures(temperatures_list):
-    return list(map(lambda x: {"id" : x[0], "valoare" : x[1], "timestamp" : x[2]}, temperatures_list))
+    return list(map(lambda x: {"id" : int(x[0]), "valoare" : float(x[1]), "timestamp" : x[2]}, temperatures_list))
 
 def insert_to_countries(cursor, db_connection, country):
 
     cursor.execute("insert into Tari (nume_tara, latitudine, longitudine) values (%s, %s, %s) returning id",
                 (country.name, country.lat, country.long))
-
 
     db_connection.commit()
 
@@ -55,15 +54,20 @@ def post_helper(params, cursor, db_connection, jsonToFunc, insertToFunc):
         db_connection.commit()
         return Response(status=409)
 
-def get_helper(sql_command, cursor, fetchedDataToFunc):
-    
-    cursor.execute(sql_command)
+def get_helper(sql_command, db_connection, cursor, fetchedDataToFunc):
 
-    locations_list = cursor.fetchall()
+    try:
+        cursor.execute(sql_command)
 
-    locations_json_list = fetchedDataToFunc(locations_list)
+        locations_list = cursor.fetchall()
 
-    return jsonify(locations_json_list)
+        locations_json_list = fetchedDataToFunc(locations_list)
+
+        return jsonify(locations_json_list)
+    except Exception as e:
+        cursor.execute("ROLLBACK")
+        db_connection.commit()
+        return Response(status=409)
 
 
 def execute_update_country(cursor, country, id):
@@ -99,10 +103,16 @@ def put_helper(params, id, cursor, jsonToFunc, executeUpdateFunc, db_connection)
 
 def delete_helper(id, cursor, table_name, db_connection):
 
-    cursor.execute("DELETE FROM %s WHERE id=%s returning id" % (table_name, id,))
+    try:
+        cursor.execute("DELETE FROM %s WHERE id=%s returning id" % (table_name, id,))
 
-    if cursor.fetchone() is None:
-        return Response(status=404)
-    
-    db_connection.commit()
-    return Response(status=200)
+        if cursor.fetchone() is None:
+            return Response(status=404)
+
+        db_connection.commit()
+        return Response(status=200)
+
+    except IntegrityError as e:
+        cursor.execute("ROLLBACK")
+        db_connection.commit()
+        return Response(status=409)

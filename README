@@ -1,0 +1,42 @@
+Tema 2 - REST API & Docker
+Radu Soare
+343C5
+
+Decizii tehnologii:
+- am ales sa scriu logica serverului folosind framework-ul Flask din Python
+- baza de date aleasa a fost PostgreSQL asupra careia s-au realizat operatii folosind
+biblioteca psycopg2 pentru Python
+- serverul este containerizat cu ajutorul Dockerfile-ului care porneste de la o imagine
+de python peste care au fost instalate dependintele necesare
+- pentru baza de date am folosit imaginea oficiala de postgres din docker hub
+- cele doua containere sunt rulate impreuna folosind docker-compose care expune
+serverul pe localhost:80
+
+Logica implementare server:
+- se conecteaza la baza de date expusa prin portul 5432
+- creeaza tabelele in cazul in care acestea nu exista
+- expune functiile din spatele metodelor HTTP
+    -- metodele HTTP au un corp comun pentru toate tabelele modificand pe
+    alocuri logica specifica fiecareia pasand-o ca parametru de tip functie
+ * GET *
+ - se executa o comanda de tip SELECT si se intoarce un JSON cu datele specifice
+ fiecarei tabele
+ * POST *
+ - se executa o comanda de tip INSERT in functie de datele obtinute din body-ul cererii HTTP
+ si intoarce id-ul generat automat la insert
+ * PUT *
+ - se executa o comanda de tip UPDATE in functie de id-ul cerut prin parametru in URL si
+ datele obtinute din body-ul cererii HTTP
+ * DELETE *
+ - se executa o comanda de tip DELETE in functie de id-ul cerut prin parametru in URL
+
+
+Detalii de implementare:
+- m-am folosit de mecanismul de cheie straina pentru a ma asigura ca nu exista inconsistente
+intre tabele (ex. sa nu pot adauga un oras cu idTara inexistent in tabele de tari)
+- m-am folosit de mecanismul de stergere in cascada pentru a pastrat consistenta
+tabelelor la DELETE (ex. daca sterg o tara, sa se stearga orasele acelei tari si temperaturile
+din acele orase)
+- id-urile sunt generate automat de postgres
+- timestamp-ul este generat la insert din codul python
+

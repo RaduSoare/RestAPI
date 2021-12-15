@@ -25,31 +25,47 @@ db_connection = psycopg2.connect(database=DB_NAME,
 
 cursor = db_connection.cursor()
 
+cursor.execute('drop table temperaturi;')
+db_connection.commit()
+cursor.execute('drop table orase;')
+db_connection.commit()
+cursor.execute('drop table tari;')
+db_connection.commit()
 
-# cursor.execute('drop table tari;')
-# db_connection.commit()
-# cursor.execute('drop table orase;')
-# db_connection.commit()
-# cursor.execute('drop table temperaturi;')
-# db_connection.commit()
 
 cursor.execute(
-        'create table if not exists Tari (id serial PRIMARY KEY, nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION);')
+        'create table '
+        'if not exists Tari (id serial PRIMARY KEY, '
+                            'nume_tara VARCHAR ( 50 ) UNIQUE NOT NULL, '
+                            'latitudine DOUBLE PRECISION, '
+                            'longitudine DOUBLE PRECISION);'
+)
 db_connection.commit()
 
 cursor.execute(
-        'create table if not exists Orase (id serial PRIMARY KEY, id_tara INTEGER NOT NULL, nume_oras VARCHAR ( 50 ) UNIQUE NOT NULL, latitudine DOUBLE PRECISION, longitudine DOUBLE PRECISION, UNIQUE (id_tara, nume_oras));')
+        'create table if not exists Orase (id serial PRIMARY KEY, '
+                                            'id_tara INTEGER NOT NULL, '
+                                            'nume_oras VARCHAR ( 50 ) UNIQUE NOT NULL, '
+                                            'latitudine DOUBLE PRECISION, '
+                                            'longitudine DOUBLE PRECISION, '
+                                            'UNIQUE (id_tara, nume_oras), '
+                                            'constraint fk_id_tara foreign key(id_tara) references tari(id) on delete cascade);'
+)
 db_connection.commit()
 
 cursor.execute(
-    'create table if not exists Temperaturi (id serial PRIMARY KEY, id_oras INTEGER NOT NULL, valoare DOUBLE PRECISION,  timestamp DATE NOT NULL DEFAULT CURRENT_DATE, UNIQUE (id_oras, timestamp));'
+    'create table if not exists Temperaturi (id serial PRIMARY KEY, '
+                                            'id_oras INTEGER NOT NULL, '
+                                            'valoare DOUBLE PRECISION,  '
+                                            'timestamp DATE NOT NULL, '
+                                            'UNIQUE (id_oras, timestamp), '
+                                            'constraint fk_id_oras foreign key(id_oras) references orase(id) on delete cascade);'
 )
 db_connection.commit()
 
 
 app = Flask(__name__)
 app.config['JSON_SORT_KEYS'] = False
-
 
 ### POST ROUTES ###
 
@@ -77,57 +93,56 @@ def get_countries():
 
     sql_command = "SELECT * FROM %s" % Constants.TARI_TABLE
 
-    return get_helper(sql_command, cursor, fetched_data_to_json_countries)
+    return get_helper(sql_command, db_connection, cursor, fetched_data_to_json_countries)
 
 @app.route("/api/cities", methods=["GET"])
 def get_cities():
 
     sql_command = "SELECT * FROM %s" % Constants.ORASE_TABLE
 
-    return get_helper(sql_command, cursor, fetched_data_to_json_cities)
+    return get_helper(sql_command,db_connection, cursor, fetched_data_to_json_cities)
 
 @app.route("/api/cities/country/<int:id_Tara>", methods=["GET"])
 def get_cities_from_country(id_Tara):
     
     sql_command = "select * from orase where id_tara=%s" %  id_Tara
 
-    return get_helper(sql_command, cursor, fetched_data_to_json_cities)
+    return get_helper(sql_command,db_connection, cursor, fetched_data_to_json_cities)
 
 @app.route("/api/temperatures", methods=["GET"])
 def get_temperatures():
-    lat_param = "orase.latitudine"
-    lon_param = "orase.longitudine"
-    from_param = "temperaturi.timestamp"
-    until_param =  "temperaturi.timestamp"
+
+    with_params = False
+
+    lat_param = "temps.latitudine"
+    lon_param = "temps.longitudine"
+    from_param = "temps.timestamp"
+    until_param =  "temps.timestamp"
+
+    ## Poate reusesc sa fac acelasi tip de guard pentru None
+
+    ## De facut sa isi revina dupa ce da fail in GET
+
+    ## De guardat tiemstamp cu format prost/outoftime psycopg2.errors.DatetimeFieldOverflow
 
     try:
         lat_param = float(request.args.get(Constants.LAT))
     except Exception as e:
-        lat_param = "orase.latitudine"
+        lat_param = "temps.latitudine"
     try:
         lon_param = float(request.args.get(Constants.LONG))
     except Exception as e:
-        lon_param = "orase.longitudine"
+        lon_param = "temps.longitudine"
 
-    try:
-        temp = request.args.get(Constants.FROM)
-        from_param = "'%s'::date" % temp
-    except Exception as e:
-        from_param="temperaturi.timestamp"
+    arg = request.args.get(Constants.FROM)
+    if arg is not None:
+        from_param = "'%s'::date" % arg
 
-    try:
-        temp = request.args.get(Constants.UNTIL)
-        until_param = "'%s'::date" % temp
-    except Exception as e:
-        until_param = "temperaturi.timestamp"
+    arg = request.args.get(Constants.UNTIL)
+    if arg is not None:
+        until_param = "'%s'::date" % arg
 
-    sql_command_debug = "select temperaturi.id, temperaturi.valoare, tari.id, tari.nume_tara, tari.latitudine, tari.longitudine " \
-                  "from temperaturi " \
-                  "join orase on temperaturi.id_oras=orase.id " \
-                  "join tari on orase.id_tara=tari.id " \
-                  "where " \
-                  "tari.latitudine=%s and tari.longitudine=%s " \
-                  "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (lat_param, lon_param, from_param, until_param)
+    ## Acum asta e overkill fiindca nu mai exista cazuri de oras fara tara corespondenta
 
     sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
                         "from temperaturi " \
@@ -138,7 +153,19 @@ def get_temperatures():
                         "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
                         lat_param, lon_param, from_param, until_param)
 
-    return get_helper(sql_command, cursor, fetched_data_to_json_temperatures)
+    sql_command_updated = "select temps.id, temps.valoare, TO_CHAR(temps.timestamp, 'YYYY.MM.DD') " \
+                          "from (select temperaturi.id, temperaturi.valoare, temperaturi.timestamp, " \
+                                    "case when orase.latitudine is null then -1 else orase.latitudine end, " \
+                                    "case when orase.longitudine is null then -1 else orase.longitudine end " \
+                                    "from temperaturi " \
+                                    "left join orase on temperaturi.id_oras=orase.id) as temps " \
+                          "where " \
+                            "temps.latitudine=%s and " \
+                            "temps.longitudine=%s and " \
+                            "temps.timestamp>=%s and " \
+                            "temps.timestamp<=%s;" % (lat_param, lon_param, from_param, until_param)
+
+    return get_helper(sql_command_updated, db_connection, cursor, fetched_data_to_json_temperatures)
 
 # @app.route("/api/temperatures/cities/<int:id_oras>", methods=["GET"])
 # def get_temperatures_cities(id_oras):

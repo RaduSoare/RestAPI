@@ -37,5 +37,7 @@ nd temperaturi.timestamp<='2021-12-30'::date;
 select temperaturi.id, temperaturi.valoare, temperaturi.timestamp from temperaturi join orase on temperaturi.id_oras=orase.id join tari on orase.id_tara=tari.id where tari.latitudine=tari.latitudine and tari.longitudine=tari.longitudine and temperaturi.timestamp>='2021-12-01'::date a
 nd temperaturi.timestamp<='2021-12-30'::date;
 
-select temperaturi.id, temperaturi.valoare, temperaturi.timestamp from temperaturi join orase on temperaturi.id_oras=orase.id join tari on orase.id_tara=tari.id where tari.latitudine=tari.latitudine and tari.longitudine=tari.longitudine and temperaturi.timestamp>='2021-12-01'::date a
-nd temperaturi.timestamp<='2021-12-30'::date;
+select temperaturi.id, temperaturi.valoare, temperaturi.timestamp from temperaturi join orase on temperaturi.id_oras=orase.id join tari on orase.id_tara=tari.id where tari.latitudine=tari.latitudine and tari.longitudine=tari.longitudine and temperaturi.timestamp>='2021-12-01'::date and temperaturi.timestamp<='2021-12-30'::date;
+
+TODO: verificat ca exista tara cand adaug oras cu o tara anume
+    Sterge cascadata: sterg tara => sterg orase => sterg temperaturi
