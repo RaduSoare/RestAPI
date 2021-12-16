@@ -114,10 +114,10 @@ def get_temperatures():
 
     with_params = False
 
-    lat_param = "temps.latitudine"
-    lon_param = "temps.longitudine"
-    from_param = "temps.timestamp"
-    until_param =  "temps.timestamp"
+    lat_param = "orase.latitudine"
+    lon_param = "orase.longitudine"
+    from_param = "temperaturi.timestamp"
+    until_param = "temperaturi.timestamp"
 
     ## Poate reusesc sa fac acelasi tip de guard pentru None
 
@@ -128,11 +128,11 @@ def get_temperatures():
     try:
         lat_param = float(request.args.get(Constants.LAT))
     except Exception as e:
-        lat_param = "temps.latitudine"
+        lat_param = "orase.latitudine"
     try:
         lon_param = float(request.args.get(Constants.LONG))
     except Exception as e:
-        lon_param = "temps.longitudine"
+        lon_param = "orase.longitudine"
 
     arg = request.args.get(Constants.FROM)
     if arg is not None:
@@ -145,35 +145,65 @@ def get_temperatures():
     ## Acum asta e overkill fiindca nu mai exista cazuri de oras fara tara corespondenta
 
     sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
-                        "from temperaturi " \
-                        "join orase on temperaturi.id_oras=orase.id " \
-                        "join tari on orase.id_tara=tari.id " \
-                        "where " \
-                        "orase.latitudine=%s and orase.longitudine=%s " \
-                        "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
-                        lat_param, lon_param, from_param, until_param)
+                  "from temperaturi " \
+                  "join orase on temperaturi.id_oras=orase.id " \
+                  "join tari on orase.id_tara=tari.id " \
+                  "where " \
+                  "orase.latitudine=%s and orase.longitudine=%s " \
+                  "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
+                      lat_param, lon_param, from_param, until_param)
 
-    sql_command_updated = "select temps.id, temps.valoare, TO_CHAR(temps.timestamp, 'YYYY.MM.DD') " \
-                          "from (select temperaturi.id, temperaturi.valoare, temperaturi.timestamp, " \
-                                    "case when orase.latitudine is null then -1 else orase.latitudine end, " \
-                                    "case when orase.longitudine is null then -1 else orase.longitudine end " \
-                                    "from temperaturi " \
-                                    "left join orase on temperaturi.id_oras=orase.id) as temps " \
-                          "where " \
-                            "temps.latitudine=%s and " \
-                            "temps.longitudine=%s and " \
-                            "temps.timestamp>=%s and " \
-                            "temps.timestamp<=%s;" % (lat_param, lon_param, from_param, until_param)
 
-    return get_helper(sql_command_updated, db_connection, cursor, fetched_data_to_json_temperatures)
+    return get_helper(sql_command, db_connection, cursor, fetched_data_to_json_temperatures)
 
-# @app.route("/api/temperatures/cities/<int:id_oras>", methods=["GET"])
-# def get_temperatures_cities(id_oras):
-#     return Response(status=200)
+@app.route("/api/temperatures/cities/<int:id_oras>", methods=["GET"])
+def get_temperatures_cities(id_oras):
 
-# @app.route("/api/temperatures/countries/<int:id_Tara>", methods=["GET"])
-# def get_temperatures_countries(id_Tara):
-#     return Response(status=200)
+    from_param = "temperaturi.timestamp"
+    until_param = "temperaturi.timestamp"
+
+    arg = request.args.get(Constants.FROM)
+    if arg is not None:
+        from_param = "'%s'::date" % arg
+
+    arg = request.args.get(Constants.UNTIL)
+    if arg is not None:
+        until_param = "'%s'::date" % arg
+
+    sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
+                  "from temperaturi " \
+                  "join orase on temperaturi.id_oras=orase.id " \
+                  "join tari on orase.id_tara=tari.id " \
+                  "where " \
+                  "orase.id=%s" \
+                  "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
+                      id_oras, from_param, until_param)
+
+    return get_helper(sql_command, db_connection, cursor, fetched_data_to_json_temperatures)
+
+@app.route("/api/temperatures/countries/<int:id_Tara>", methods=["GET"])
+def get_temperatures_countries(id_Tara):
+    from_param = "temperaturi.timestamp"
+    until_param = "temperaturi.timestamp"
+
+    arg = request.args.get(Constants.FROM)
+    if arg is not None:
+        from_param = "'%s'::date" % arg
+
+    arg = request.args.get(Constants.UNTIL)
+    if arg is not None:
+        until_param = "'%s'::date" % arg
+
+    sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
+                  "from temperaturi " \
+                  "join orase on temperaturi.id_oras=orase.id " \
+                  "join tari on orase.id_tara=tari.id " \
+                  "where " \
+                  "tari.id=%s" \
+                  "and temperaturi.timestamp>=%s and temperaturi.timestamp<=%s;" % (
+                      id_Tara, from_param, until_param)
+
+    return get_helper(sql_command, db_connection, cursor, fetched_data_to_json_temperatures)
 
 
 ### PUT ROUTES ###
