@@ -1,8 +1,4 @@
-from flask import Flask
-from flask import request, jsonify, Response
-
 import psycopg2
-from psycopg2 import IntegrityError
 
 import Constants
 import os
@@ -25,6 +21,7 @@ db_connection = psycopg2.connect(database=DB_NAME,
 
 cursor = db_connection.cursor()
 
+# Kept for testing
 cursor.execute('drop table temperaturi;')
 db_connection.commit()
 cursor.execute('drop table orase;')
@@ -112,18 +109,8 @@ def get_cities_from_country(id_Tara):
 @app.route("/api/temperatures", methods=["GET"])
 def get_temperatures():
 
-    with_params = False
-
-    lat_param = "orase.latitudine"
-    lon_param = "orase.longitudine"
     from_param = "temperaturi.timestamp"
     until_param = "temperaturi.timestamp"
-
-    ## Poate reusesc sa fac acelasi tip de guard pentru None
-
-    ## De facut sa isi revina dupa ce da fail in GET
-
-    ## De guardat tiemstamp cu format prost/outoftime psycopg2.errors.DatetimeFieldOverflow
 
     try:
         lat_param = float(request.args.get(Constants.LAT))
@@ -142,7 +129,6 @@ def get_temperatures():
     if arg is not None:
         until_param = "'%s'::date" % arg
 
-    ## Acum asta e overkill fiindca nu mai exista cazuri de oras fara tara corespondenta
 
     sql_command = "select temperaturi.id, temperaturi.valoare, TO_CHAR(temperaturi.timestamp, 'YYYY-MM-DD') " \
                   "from temperaturi " \

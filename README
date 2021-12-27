@@ -40,3 +40,7 @@ din acele orase)
 - id-urile sunt generate automat de postgres
 - timestamp-ul este generat la insert din codul python
 
+Mentiuni:
+- cateva teste de GetTemps esueaza din motive pe care nu le-am putut explica, desi la o rulare manuala
+outputul este cel asteptat (probabil apare o inconsistenta in formatarea outputului)
+
